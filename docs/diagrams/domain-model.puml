@@ -1,0 +1,21 @@
+@startuml
+class ReferralToken {
+  +token
+  +channel
+  +status
+  +expires_at
+}
+class AttributionVisit {
+  +visit_id
+  +token
+  +clicked_at
+}
+class AttributionConversion {
+  +conversion_id
+  +stage
+  +access_grant_id
+}
+
+ReferralToken "1" --> "many" AttributionVisit
+ReferralToken "1" --> "many" AttributionConversion
+@enduml

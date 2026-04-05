@@ -1,0 +1,17 @@
+@startuml
+skinparam componentStyle rectangle
+
+package "interface" { [HTTP API] }
+package "application" { [ApplicationFacade] [Handlers] [Ports] }
+package "domain" { [Tokens] [Visits] [Conversions] }
+package "infrastructure" { [Repositories] [UoW] [Reporting] }
+
+[HTTP API] --> [ApplicationFacade]
+[ApplicationFacade] --> [Handlers]
+[Handlers] --> [Tokens]
+[Handlers] --> [Visits]
+[Handlers] --> [Conversions]
+[Repositories] ..|> [Ports]
+[UoW] ..|> [Ports]
+[Reporting] ..|> [Ports]
+@enduml

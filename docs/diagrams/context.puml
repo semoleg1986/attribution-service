@@ -1,0 +1,12 @@
+@startuml
+left to right direction
+
+rectangle auth_service
+rectangle users_service
+rectangle course_service
+rectangle attribution_service
+
+auth_service --> attribution_service : admin actor context
+course_service --> attribution_service : resolve discount / record conversion
+attribution_service --> course_service : attribution snapshot (token/channel/discount)
+@enduml

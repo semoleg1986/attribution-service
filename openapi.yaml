@@ -1,0 +1,368 @@
+openapi: 3.1.0
+info:
+  title: attribution-service API
+  version: 0.1.0
+  description: Контрактный API для реферальных токенов, расчета скидок и канальной атрибуции.
+servers:
+  - url: http://localhost:8000
+
+tags:
+  - name: health
+  - name: admin
+  - name: public
+  - name: internal
+
+paths:
+  /healthz:
+    get:
+      tags: [health]
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Сервис доступен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, const: ok }
+
+  /v1/admin/referral-tokens:
+    post:
+      tags: [admin]
+      summary: Создать реферальный токен
+      operationId: createReferralToken
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateReferralTokenRequest' }
+      responses:
+        '201':
+          description: Создано
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReferralTokenResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/AccessDenied' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+
+    get:
+      tags: [admin]
+      summary: Список реферальных токенов
+      operationId: listReferralTokens
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: query
+          name: channel
+          schema: { $ref: '#/components/schemas/AttributionChannel' }
+        - in: query
+          name: status
+          schema: { $ref: '#/components/schemas/TokenStatus' }
+      responses:
+        '200':
+          description: Токены
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/ReferralTokenResponse' }
+
+  /v1/admin/referral-tokens/{token}/disable:
+    post:
+      tags: [admin]
+      summary: Отключить реферальный токен
+      operationId: disableReferralToken
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/Token'
+      responses:
+        '200':
+          description: Отключен
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReferralTokenResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/AccessDenied' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /v1/public/referrals/{token}/click:
+    post:
+      tags: [public]
+      summary: Зафиксировать клик по реферальному токену
+      operationId: trackReferralClick
+      parameters:
+        - $ref: '#/components/parameters/Token'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TrackClickRequest' }
+      responses:
+        '202':
+          description: Клик принят
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TrackClickResponse' }
+
+  /v1/internal/discount/resolve:
+    post:
+      tags: [internal]
+      summary: Рассчитать скидку и снимок атрибуции
+      operationId: resolveDiscount
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ResolveDiscountRequest' }
+      responses:
+        '200':
+          description: Рассчитано
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ResolveDiscountResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/AccessDenied' }
+
+  /v1/internal/conversions/requested:
+    post:
+      tags: [internal]
+      summary: Записать requested-конверсию
+      operationId: recordRequestedConversion
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RecordRequestedConversionRequest' }
+      responses:
+        '202':
+          description: Записано
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ConversionResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/AccessDenied' }
+
+  /v1/internal/conversions/paid:
+    post:
+      tags: [internal]
+      summary: Записать paid-конверсию
+      operationId: recordPaidConversion
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RecordPaidConversionRequest' }
+      responses:
+        '202':
+          description: Записано
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ConversionResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/AccessDenied' }
+
+  /v1/admin/reports/channels:
+    get:
+      tags: [admin]
+      summary: Отчет по каналам атрибуции
+      operationId: getChannelReport
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: query
+          name: date_from
+          required: true
+          schema: { type: string, format: date }
+        - in: query
+          name: date_to
+          required: true
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: Отчет
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/ChannelReportItem' }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    Token:
+      name: token
+      in: path
+      required: true
+      schema: { type: string }
+
+  responses:
+    Unauthorized:
+      description: Не авторизован
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    AccessDenied:
+      description: Доступ запрещен
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    NotFound:
+      description: Не найдено
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    ValidationError:
+      description: Ошибка валидации
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+
+  schemas:
+    Problem:
+      type: object
+      required: [type, title, status, detail]
+      properties:
+        type: { type: string }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string }
+        request_id: { type: string }
+
+    AttributionChannel:
+      type: string
+      enum: [in_app, email, sms, ads, partner, other]
+
+    TokenStatus:
+      type: string
+      enum: [active, disabled, expired]
+
+    DiscountType:
+      type: string
+      enum: [percent, fixed]
+
+    Money:
+      type: object
+      required: [amount, currency]
+      properties:
+        amount: { type: number, minimum: 0 }
+        currency: { type: string, minLength: 3, maxLength: 3 }
+
+    CreateReferralTokenRequest:
+      type: object
+      required: [channel, discount_type, discount_value, course_id]
+      properties:
+        channel: { $ref: '#/components/schemas/AttributionChannel' }
+        campaign:
+          type: string
+        course_id:
+          type: string
+          format: uuid
+        discount_type: { $ref: '#/components/schemas/DiscountType' }
+        discount_value:
+          type: number
+          minimum: 0
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    ReferralTokenResponse:
+      type: object
+      required: [token, status, channel, discount_type, discount_value]
+      properties:
+        token: { type: string }
+        status: { $ref: '#/components/schemas/TokenStatus' }
+        channel: { $ref: '#/components/schemas/AttributionChannel' }
+        campaign: { type: string, nullable: true }
+        course_id: { type: string, format: uuid, nullable: true }
+        discount_type: { $ref: '#/components/schemas/DiscountType' }
+        discount_value: { type: number }
+        expires_at: { type: string, format: date-time, nullable: true }
+
+    TrackClickRequest:
+      type: object
+      properties:
+        anonymous_id: { type: string }
+        parent_id: { type: string, format: uuid }
+        source_url: { type: string }
+
+    TrackClickResponse:
+      type: object
+      required: [accepted]
+      properties:
+        accepted: { type: boolean }
+
+    ResolveDiscountRequest:
+      type: object
+      required: [course_id]
+      properties:
+        course_id: { type: string, format: uuid }
+        referral_token: { type: string, nullable: true }
+        channel: { $ref: '#/components/schemas/AttributionChannel' }
+        parent_id: { type: string, format: uuid, nullable: true }
+
+    ResolveDiscountResponse:
+      type: object
+      required: [valid, channel, discount]
+      properties:
+        valid: { type: boolean }
+        token: { type: string, nullable: true }
+        channel: { $ref: '#/components/schemas/AttributionChannel' }
+        campaign: { type: string, nullable: true }
+        discount:
+          $ref: '#/components/schemas/Money'
+
+    RecordRequestedConversionRequest:
+      type: object
+      required: [access_grant_id, course_id, student_id, channel]
+      properties:
+        access_grant_id: { type: string, format: uuid }
+        course_id: { type: string, format: uuid }
+        student_id: { type: string, format: uuid }
+        parent_id: { type: string, format: uuid, nullable: true }
+        token: { type: string, nullable: true }
+        channel: { $ref: '#/components/schemas/AttributionChannel' }
+        discount:
+          $ref: '#/components/schemas/Money'
+
+    RecordPaidConversionRequest:
+      type: object
+      required: [access_grant_id, paid_amount]
+      properties:
+        access_grant_id: { type: string, format: uuid }
+        paid_amount: { $ref: '#/components/schemas/Money' }
+        approved_by_admin_id: { type: string, format: uuid, nullable: true }
+
+    ConversionResponse:
+      type: object
+      required: [accepted]
+      properties:
+        accepted: { type: boolean }
+
+    ChannelReportItem:
+      type: object
+      required: [channel, clicks, requested, paid, paid_revenue]
+      properties:
+        channel: { $ref: '#/components/schemas/AttributionChannel' }
+        clicks: { type: integer, minimum: 0 }
+        requested: { type: integer, minimum: 0 }
+        paid: { type: integer, minimum: 0 }
+        paid_revenue: { $ref: '#/components/schemas/Money' }
