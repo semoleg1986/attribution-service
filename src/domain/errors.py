@@ -3,8 +3,12 @@ class DomainError(Exception):
 
 
 class InvariantViolationError(DomainError):
-    """
-    Ошибка нарушения доменного инварианта.
+    """Ошибка нарушения доменного инварианта."""
 
-    :raises InvariantViolationError: Если бизнес-правило агрегата нарушено.
-    """
+
+class AccessDeniedError(DomainError):
+    """Ошибка нарушения политики доступа."""
+
+
+class NotFoundError(DomainError):
+    """Ошибка отсутствия доменной сущности."""

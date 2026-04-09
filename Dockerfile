@@ -10,5 +10,4 @@ RUN pip install --no-cache-dir -r requirements.in
 
 COPY . .
 
-# В сервисе пока нет HTTP entrypoint, поэтому image публикуем как base-runtime.
-CMD ["python", "-m", "pytest", "-q"]
+CMD ["uvicorn", "src.interface.http.main:app", "--host", "0.0.0.0", "--port", "8000"]

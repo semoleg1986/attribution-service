@@ -1,1 +1,1 @@
-# Domain events placeholders for attribution conversion aggregate.
+"""Domain events placeholders for attribution conversion aggregate."""

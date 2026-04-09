@@ -1,1 +1,1 @@
-# Domain events placeholders for attribution visit entity.
+"""Domain events placeholders for attribution visit entity."""

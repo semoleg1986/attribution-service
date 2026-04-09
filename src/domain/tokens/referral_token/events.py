@@ -1,1 +1,1 @@
-# Domain events placeholders for referral_token aggregate.
+"""Domain events placeholders for referral_token aggregate."""
