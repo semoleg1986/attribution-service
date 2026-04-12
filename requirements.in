@@ -2,6 +2,8 @@ fastapi
 uvicorn
 pyjwt
 cryptography
+sqlalchemy
+psycopg[binary]
 pytest
 
 black
