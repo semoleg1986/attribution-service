@@ -4,6 +4,7 @@ pyjwt
 cryptography
 sqlalchemy
 psycopg[binary]
+alembic
 pytest
 
 black
