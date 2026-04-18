@@ -11,7 +11,7 @@ from src.application.tracking.commands.dto import (
     RecordRequestedConversionCommand,
 )
 from src.application.tracking.queries.dto import ResolveDiscountQuery
-from src.interface.http.common.actor import HttpActor, get_http_actor
+from src.interface.http.common.actor import HttpActor, get_internal_http_actor
 from src.interface.http.v1.schemas.tracking import (
     ConversionResponse,
     RecordPaidConversionRequest,
@@ -27,7 +27,7 @@ router = APIRouter(prefix="/v1/internal", tags=["internal"])
 @router.post("/discount/resolve", response_model=ResolveDiscountResponse)
 def resolve_discount(
     payload: ResolveDiscountRequest,
-    actor: HttpActor = Depends(get_http_actor),
+    actor: HttpActor = Depends(get_internal_http_actor),
     facade=Depends(get_facade),
 ) -> ResolveDiscountResponse:
     result = facade.query(
@@ -43,10 +43,12 @@ def resolve_discount(
     return ResolveDiscountResponse(**asdict(result))
 
 
-@router.post("/conversions/requested", response_model=ConversionResponse, status_code=202)
+@router.post(
+    "/conversions/requested", response_model=ConversionResponse, status_code=202
+)
 def record_requested_conversion(
     payload: RecordRequestedConversionRequest,
-    actor: HttpActor = Depends(get_http_actor),
+    actor: HttpActor = Depends(get_internal_http_actor),
     facade=Depends(get_facade),
 ) -> ConversionResponse:
     result = facade.execute(
@@ -69,7 +71,7 @@ def record_requested_conversion(
 @router.post("/conversions/paid", response_model=ConversionResponse, status_code=202)
 def record_paid_conversion(
     payload: RecordPaidConversionRequest,
-    actor: HttpActor = Depends(get_http_actor),
+    actor: HttpActor = Depends(get_internal_http_actor),
     facade=Depends(get_facade),
 ) -> ConversionResponse:
     result = facade.execute(

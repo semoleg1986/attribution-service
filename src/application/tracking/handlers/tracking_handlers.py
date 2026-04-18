@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
-from src.application.common.dto import ConversionResult, ResolveDiscountResult, TrackClickResult
+from src.application.common.dto import (
+    ConversionResult,
+    ResolveDiscountResult,
+    TrackClickResult,
+)
 from src.application.common.mappers import to_money_result
 from src.application.ports.clock import Clock
 from src.application.ports.id_generator import IdGenerator
@@ -25,7 +29,9 @@ from src.domain.visits.visit.entity import AttributionVisit
 class TrackVisitHandler:
     """Фиксирует click по реферальной ссылке."""
 
-    def __init__(self, *, uow: UnitOfWork, clock: Clock, id_generator: IdGenerator) -> None:
+    def __init__(
+        self, *, uow: UnitOfWork, clock: Clock, id_generator: IdGenerator
+    ) -> None:
         self._uow = uow
         self._clock = clock
         self._id_generator = id_generator
@@ -65,6 +71,8 @@ class ResolveDiscountHandler:
                 token=None,
                 channel=(query.channel or AttributionChannel.OTHER.value),
                 campaign=None,
+                discount_type="fixed",
+                discount_value=0.0,
                 discount=to_money_result(Money(amount=0.0, currency="USD")),
             )
 
@@ -75,6 +83,8 @@ class ResolveDiscountHandler:
                 token=query.referral_token,
                 channel=(query.channel or AttributionChannel.OTHER.value),
                 campaign=None,
+                discount_type="fixed",
+                discount_value=0.0,
                 discount=to_money_result(Money(amount=0.0, currency="USD")),
             )
 
@@ -84,6 +94,8 @@ class ResolveDiscountHandler:
                 token=token.token,
                 channel=token.channel.value,
                 campaign=token.campaign,
+                discount_type="fixed",
+                discount_value=0.0,
                 discount=to_money_result(Money(amount=0.0, currency="USD")),
             )
 
@@ -96,6 +108,8 @@ class ResolveDiscountHandler:
             token=token.token,
             channel=token.channel.value,
             campaign=token.campaign,
+            discount_type=token.discount_type.value,
+            discount_value=float(token.discount_value),
             discount=to_money_result(discount),
         )
 
@@ -126,10 +140,17 @@ class RecordRequestedConversionHandler:
             )
 
         discount = None
-        if command.discount_amount is not None and command.discount_currency is not None:
-            discount = Money(amount=command.discount_amount, currency=command.discount_currency)
+        if (
+            command.discount_amount is not None
+            and command.discount_currency is not None
+        ):
+            discount = Money(
+                amount=command.discount_amount, currency=command.discount_currency
+            )
 
-        conversion.record_requested(changed_at=now, changed_by=command.actor_id, discount=discount)
+        conversion.record_requested(
+            changed_at=now, changed_by=command.actor_id, discount=discount
+        )
         self._uow.repositories.conversions.save(conversion)
         self._uow.commit()
         return ConversionResult(accepted=True)

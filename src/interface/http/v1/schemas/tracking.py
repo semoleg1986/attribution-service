@@ -32,6 +32,8 @@ class ResolveDiscountResponse(BaseModel):
     token: str | None = None
     channel: str
     campaign: str | None = None
+    discount_type: str
+    discount_value: float = Field(ge=0)
     discount: MoneySchema
 
 

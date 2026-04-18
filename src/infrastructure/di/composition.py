@@ -54,6 +54,7 @@ from src.infrastructure.id.uuid_generator import UuidGenerator
 class RuntimeContainer:
     """Runtime зависимости attribution-service."""
 
+    settings: Settings
     facade: ApplicationFacade
     access_token_verifier: AccessTokenVerifier
 
@@ -122,4 +123,8 @@ def build_runtime() -> RuntimeContainer:
     facade.register_query_handler(
         GetChannelReportQuery, GetChannelReportHandler(uow=uow)
     )
-    return RuntimeContainer(facade=facade, access_token_verifier=access_token_verifier)
+    return RuntimeContainer(
+        settings=settings,
+        facade=facade,
+        access_token_verifier=access_token_verifier,
+    )

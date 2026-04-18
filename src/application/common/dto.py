@@ -35,6 +35,8 @@ class ResolveDiscountResult:
     token: str | None
     channel: str
     campaign: str | None
+    discount_type: str
+    discount_value: float
     discount: MoneyResult
 
 
