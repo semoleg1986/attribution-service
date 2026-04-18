@@ -1,6 +1,6 @@
 from datetime import UTC, datetime, timedelta
 
-from tests.interface._auth_helpers import auth_headers, build_client
+from tests.unit.interface._auth_helpers import auth_headers, build_client
 
 
 def test_public_click_internal_resolve_and_conversion_report_flow() -> None:
@@ -70,7 +70,9 @@ def test_public_click_internal_resolve_and_conversion_report_flow() -> None:
         headers=auth_headers(sub="admin-1", roles=["admin"]),
     )
     assert report.status_code == 200, report.text
-    email_row = next(item for item in report.json()["items"] if item["channel"] == "email")
+    email_row = next(
+        item for item in report.json()["items"] if item["channel"] == "email"
+    )
     assert email_row["clicks"] == 1
     assert email_row["requested"] == 1
     assert email_row["paid"] == 1

@@ -1,6 +1,6 @@
 from datetime import UTC, datetime, timedelta
 
-from tests.interface._auth_helpers import auth_headers, build_client
+from tests.unit.interface._auth_helpers import auth_headers, build_client
 
 
 def test_admin_can_create_list_and_disable_token() -> None:

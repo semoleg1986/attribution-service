@@ -1,4 +1,4 @@
-from tests.interface._auth_helpers import build_client
+from tests.unit.interface._auth_helpers import build_client
 
 
 def test_healthz() -> None:

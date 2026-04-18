@@ -13,7 +13,10 @@ from src.infrastructure.db.inmemory.repositories import (
     InMemoryAttributionVisitRepository,
     InMemoryReferralTokenRepository,
 )
-from src.infrastructure.db.inmemory.uow import InMemoryRepositoryProvider, InMemoryUnitOfWork
+from src.infrastructure.db.inmemory.uow import (
+    InMemoryRepositoryProvider,
+    InMemoryUnitOfWork,
+)
 
 
 class FakeClock:

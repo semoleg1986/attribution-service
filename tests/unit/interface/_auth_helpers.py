@@ -5,10 +5,10 @@ import json
 import os
 from datetime import UTC, datetime, timedelta
 
+import jwt
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from fastapi.testclient import TestClient
-import jwt
 
 from src.interface.http.app import create_app
 from src.interface.http.wiring import get_runtime
