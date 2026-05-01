@@ -49,3 +49,44 @@ def test_non_admin_cannot_create_token() -> None:
         headers=auth_headers(sub="teacher-1", roles=["teacher"]),
     )
     assert denied.status_code == 403, denied.text
+
+
+def test_admin_create_token_rejects_naive_course_starts_at() -> None:
+    client = build_client()
+
+    response = client.post(
+        "/v1/admin/referral-tokens",
+        json={
+            "channel": "email",
+            "campaign": "spring",
+            "course_id": "course-1",
+            "discount_type": "fixed",
+            "discount_value": 25,
+            "course_starts_at": "2026-09-01T16:00:00",
+        },
+        headers=auth_headers(sub="admin-1", roles=["admin"]),
+    )
+    assert response.status_code == 422, response.text
+    assert (
+        "course_starts_at должен содержать timezone offset" in response.json()["detail"]
+    )
+
+
+def test_admin_create_token_rejects_naive_expires_at() -> None:
+    client = build_client()
+
+    response = client.post(
+        "/v1/admin/referral-tokens",
+        json={
+            "channel": "email",
+            "campaign": "spring",
+            "course_id": "course-1",
+            "discount_type": "fixed",
+            "discount_value": 25,
+            "course_starts_at": (datetime.now(UTC) + timedelta(days=10)).isoformat(),
+            "expires_at": "2026-08-01T10:00:00",
+        },
+        headers=auth_headers(sub="admin-1", roles=["admin"]),
+    )
+    assert response.status_code == 422, response.text
+    assert "expires_at должен содержать timezone offset" in response.json()["detail"]
