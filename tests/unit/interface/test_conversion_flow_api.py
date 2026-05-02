@@ -249,3 +249,54 @@ def test_campaign_stats_aggregates_by_channel_and_campaign() -> None:
     assert may_row["paid"] == 0
     assert may_row["gross_revenue"]["amount"] == 0.0
     assert may_row["discount_total"]["amount"] == 10.0
+
+
+def test_campaign_stats_csv_export() -> None:
+    client = build_client()
+
+    created = client.post(
+        "/v1/admin/referral-tokens",
+        json={
+            "channel": "email",
+            "campaign": "csv-spring",
+            "course_id": "course-1",
+            "discount_type": "fixed",
+            "discount_value": 15,
+            "course_starts_at": (datetime.now(UTC) + timedelta(days=10)).isoformat(),
+        },
+        headers=auth_headers(sub="admin-1", roles=["admin"]),
+    )
+    assert created.status_code == 201, created.text
+    token = created.json()["token"]
+
+    click = client.post(
+        f"/v1/public/referrals/{token}/click",
+        json={"anonymous_id": "anon-csv-1", "source_url": "https://example.com"},
+    )
+    assert click.status_code == 202, click.text
+
+    requested = client.post(
+        "/v1/internal/conversions/requested",
+        json={
+            "access_grant_id": "grant-csv-1",
+            "course_id": "course-1",
+            "student_id": "student-1",
+            "token": token,
+            "channel": "email",
+            "discount": {"amount": 15, "currency": "USD"},
+        },
+        headers=auth_headers(sub="svc-course", roles=["service"]),
+    )
+    assert requested.status_code == 202, requested.text
+
+    exported = client.get(
+        "/v1/admin/campaigns/stats.csv?date_from=2026-01-01&date_to=2026-12-31&channel=email",
+        headers=auth_headers(sub="admin-1", roles=["admin"]),
+    )
+    assert exported.status_code == 200, exported.text
+    assert exported.headers["content-type"].startswith("text/csv")
+    assert 'attachment; filename="campaign-stats.csv"' in exported.headers.get(
+        "content-disposition", ""
+    )
+    assert "channel,campaign,clicks,requested,paid" in exported.text
+    assert "email,csv-spring,1,1,0,0.0,USD,15.0,USD" in exported.text

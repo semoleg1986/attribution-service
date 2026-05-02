@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import csv
 from dataclasses import asdict
 from datetime import date
+from io import StringIO
 
 from fastapi import APIRouter, Depends, Query
+from fastapi.responses import Response
 
 from src.application.reporting.queries.dto import (
     GetCampaignReportQuery,
@@ -137,4 +140,61 @@ def get_campaigns_report(
         limit=result.limit,
         offset=result.offset,
         total=result.total,
+    )
+
+
+@router.get("/campaigns/stats.csv", response_class=Response)
+def export_campaigns_report_csv(
+    date_from: date,
+    date_to: date,
+    channel: str | None = Query(default=None),
+    actor: HttpActor = Depends(get_http_actor),
+    facade=Depends(get_facade),
+) -> Response:
+    result = facade.query(
+        GetCampaignReportQuery(
+            date_from=date_from,
+            date_to=date_to,
+            channel=channel,
+            limit=10_000,
+            offset=0,
+            actor_id=actor.actor_id,
+            actor_roles=actor.roles,
+        )
+    )
+
+    buffer = StringIO()
+    writer = csv.writer(buffer)
+    writer.writerow(
+        [
+            "channel",
+            "campaign",
+            "clicks",
+            "requested",
+            "paid",
+            "gross_revenue_amount",
+            "gross_revenue_currency",
+            "discount_total_amount",
+            "discount_total_currency",
+        ]
+    )
+    for item in result.items:
+        writer.writerow(
+            [
+                item.channel,
+                item.campaign or "",
+                item.clicks,
+                item.requested,
+                item.paid,
+                item.gross_revenue.amount,
+                item.gross_revenue.currency,
+                item.discount_total.amount,
+                item.discount_total.currency,
+            ]
+        )
+
+    return Response(
+        content=buffer.getvalue(),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": 'attachment; filename="campaign-stats.csv"'},
     )

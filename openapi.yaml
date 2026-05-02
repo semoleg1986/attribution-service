@@ -265,6 +265,33 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/CampaignReportResponse' }
 
+  /v1/admin/campaigns/stats.csv:
+    get:
+      tags: [admin]
+      summary: CSV-экспорт отчета по campaign/channel атрибуции
+      operationId: exportCampaignStatsCsv
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: query
+          name: date_from
+          required: true
+          schema: { type: string, format: date }
+        - in: query
+          name: date_to
+          required: true
+          schema: { type: string, format: date }
+        - in: query
+          name: channel
+          required: false
+          schema: { $ref: '#/components/schemas/AttributionChannel' }
+      responses:
+        '200':
+          description: CSV-выгрузка по кампаниям
+          content:
+            text/csv:
+              schema:
+                type: string
+
 components:
   securitySchemes:
     bearerAuth:
