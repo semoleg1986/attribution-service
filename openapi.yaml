@@ -110,6 +110,39 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/TrackClickResponse' }
 
+  /r/{token}:
+    get:
+      tags: [public]
+      summary: Зафиксировать клик по короткой реферальной ссылке
+      operationId: redirectReferralClick
+      parameters:
+        - $ref: '#/components/parameters/Token'
+        - in: query
+          name: redirect_to
+          required: false
+          schema: { type: string, format: uri }
+        - in: query
+          name: anonymous_id
+          required: false
+          schema: { type: string }
+        - in: query
+          name: parent_id
+          required: false
+          schema: { type: string }
+        - in: query
+          name: source_url
+          required: false
+          schema: { type: string, format: uri }
+      responses:
+        '200':
+          description: Клик принят без redirect
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TrackClickResponse' }
+        '307':
+          description: Безопасный redirect на целевой URL
+        '400': { $ref: '#/components/responses/ValidationError' }
+
   /v1/internal/discount/resolve:
     post:
       tags: [internal]
