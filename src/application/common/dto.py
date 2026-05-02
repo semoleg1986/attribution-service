@@ -18,6 +18,8 @@ class ReferralTokenResult:
     status: str
     channel: str
     campaign: str | None
+    source: str | None
+    medium: str | None
     course_id: str | None
     discount_type: str
     discount_value: float

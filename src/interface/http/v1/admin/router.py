@@ -49,6 +49,8 @@ def create_referral_token(
             discount_value=payload.discount_value,
             course_id=payload.course_id,
             campaign=payload.campaign,
+            source=payload.source,
+            medium=payload.medium,
             expires_at=payload.expires_at,
             course_starts_at=payload.course_starts_at,
             actor_id=actor.actor_id,

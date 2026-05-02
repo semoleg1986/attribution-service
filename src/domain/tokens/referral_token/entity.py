@@ -33,6 +33,8 @@ class ReferralToken:
     expires_at: datetime
     meta: EntityMeta
     campaign: str | None = None
+    source: str | None = None
+    medium: str | None = None
     policy_locked: bool = False
 
     @classmethod
@@ -47,6 +49,8 @@ class ReferralToken:
         course_starts_at: datetime,
         course_id: str | None = None,
         campaign: str | None = None,
+        source: str | None = None,
+        medium: str | None = None,
         expires_at: datetime | None = None,
     ) -> "ReferralToken":
         """
@@ -69,6 +73,8 @@ class ReferralToken:
             expires_at=effective_expires_at,
             meta=EntityMeta.create(at=now, actor_id=created_by),
             campaign=campaign,
+            source=source,
+            medium=medium,
         )
 
     def is_valid(self, now: datetime) -> bool:
@@ -107,7 +113,9 @@ class ReferralToken:
         :raises InvariantViolationError: Если policy уже заблокирована.
         """
         if self.policy_locked:
-            raise InvariantViolationError("Политику скидки нельзя менять после paid-конверсии")
+            raise InvariantViolationError(
+                "Политику скидки нельзя менять после paid-конверсии"
+            )
         if discount_value < 0:
             raise InvariantViolationError("Значение скидки не может быть отрицательным")
         self.discount_type = discount_type

@@ -29,6 +29,8 @@ def to_domain(model: ReferralTokenModel) -> ReferralToken:
             archived_by=model.archived_by,
         ),
         campaign=model.campaign,
+        source=model.source,
+        medium=model.medium,
         policy_locked=model.policy_locked,
     )
 
@@ -44,6 +46,8 @@ def apply_to_model(entity: ReferralToken, model: ReferralTokenModel) -> None:
     model.status = entity.status.value
     model.expires_at = entity.expires_at
     model.campaign = entity.campaign
+    model.source = entity.source
+    model.medium = entity.medium
     model.policy_locked = entity.policy_locked
 
     model.version = entity.meta.version

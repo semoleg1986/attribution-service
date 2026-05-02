@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import re
 from datetime import datetime
 
 from pydantic import BaseModel, Field, field_validator
+
+_TRACKING_PART = re.compile(r"^[a-z0-9][a-z0-9_-]{0,63}$")
 
 
 def _ensure_tz_aware(value: datetime | None, field_name: str) -> datetime | None:
@@ -19,6 +22,8 @@ def _ensure_tz_aware(value: datetime | None, field_name: str) -> datetime | None
 class CreateReferralTokenRequest(BaseModel):
     channel: str
     campaign: str | None = None
+    source: str | None = None
+    medium: str | None = None
     course_id: str | None = None
     discount_type: str
     discount_value: float = Field(ge=0)
@@ -33,12 +38,31 @@ class CreateReferralTokenRequest(BaseModel):
         field_name = getattr(info, "field_name", "datetime")
         return _ensure_tz_aware(value, field_name)
 
+    @field_validator("campaign", "source", "medium", mode="after")
+    @classmethod
+    def ensure_tracking_field_format(
+        cls, value: str | None, info: object
+    ) -> str | None:
+        if value is None:
+            return None
+        normalized = value.strip().lower()
+        field_name = getattr(info, "field_name", "tracking_field")
+        if not normalized:
+            return None
+        if not _TRACKING_PART.fullmatch(normalized):
+            raise ValueError(
+                f"{field_name} должен содержать только lowercase latin, digits, '_' или '-'"
+            )
+        return normalized
+
 
 class ReferralTokenResponse(BaseModel):
     token: str
     status: str
     channel: str
     campaign: str | None = None
+    source: str | None = None
+    medium: str | None = None
     course_id: str | None = None
     discount_type: str
     discount_value: float

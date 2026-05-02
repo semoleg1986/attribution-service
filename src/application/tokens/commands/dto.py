@@ -13,6 +13,8 @@ class CreateReferralTokenCommand:
     discount_value: float
     course_id: str | None
     campaign: str | None
+    source: str | None
+    medium: str | None
     expires_at: datetime | None
     course_starts_at: datetime | None
     actor_id: str

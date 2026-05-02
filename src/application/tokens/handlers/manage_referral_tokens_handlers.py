@@ -23,7 +23,9 @@ from src.domain.tokens.referral_token.policies import ActorContext, AdminPolicy
 class CreateReferralTokenHandler:
     """Создает новый referral token."""
 
-    def __init__(self, *, uow: UnitOfWork, clock: Clock, id_generator: IdGenerator) -> None:
+    def __init__(
+        self, *, uow: UnitOfWork, clock: Clock, id_generator: IdGenerator
+    ) -> None:
         self._uow = uow
         self._clock = clock
         self._id_generator = id_generator
@@ -45,6 +47,8 @@ class CreateReferralTokenHandler:
             course_starts_at=course_starts_at,
             course_id=command.course_id,
             campaign=command.campaign,
+            source=command.source,
+            medium=command.medium,
             expires_at=command.expires_at,
         )
         self._uow.repositories.referral_tokens.save(token)
@@ -84,5 +88,7 @@ class ListReferralTokensHandler:
         AdminPolicy.ensure_can_manage_tokens(actor)
         channel = AttributionChannel(query.channel) if query.channel else None
         status = TokenStatus(query.status) if query.status else None
-        tokens = self._uow.repositories.referral_tokens.list(channel=channel, status=status)
+        tokens = self._uow.repositories.referral_tokens.list(
+            channel=channel, status=status
+        )
         return [to_referral_token_result(item) for item in tokens]

@@ -366,6 +366,10 @@ components:
         channel: { $ref: '#/components/schemas/AttributionChannel' }
         campaign:
           type: string
+        source:
+          type: string
+        medium:
+          type: string
         course_id:
           type: string
           format: uuid
@@ -386,6 +390,8 @@ components:
         status: { $ref: '#/components/schemas/TokenStatus' }
         channel: { $ref: '#/components/schemas/AttributionChannel' }
         campaign: { type: string, nullable: true }
+        source: { type: string, nullable: true }
+        medium: { type: string, nullable: true }
         course_id: { type: string, format: uuid, nullable: true }
         discount_type: { $ref: '#/components/schemas/DiscountType' }
         discount_value: { type: number }

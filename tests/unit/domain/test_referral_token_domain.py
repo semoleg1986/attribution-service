@@ -20,9 +20,13 @@ def test_referral_token_default_ttl_to_course_start() -> None:
         now=now,
         created_by="admin-1",
         course_starts_at=course_start,
+        source="newsletter",
+        medium="email",
     )
 
     assert token.expires_at == course_start
+    assert token.source == "newsletter"
+    assert token.medium == "email"
 
 
 def test_referral_token_is_invalid_after_expiry() -> None:

@@ -17,6 +17,8 @@ def to_referral_token_result(token: ReferralToken) -> ReferralTokenResult:
         status=token.status.value,
         channel=token.channel.value,
         campaign=token.campaign,
+        source=token.source,
+        medium=token.medium,
         course_id=token.course_id,
         discount_type=token.discount_type.value,
         discount_value=token.discount_value,

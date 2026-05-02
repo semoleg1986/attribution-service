@@ -11,6 +11,8 @@ def test_admin_can_create_list_and_disable_token() -> None:
         json={
             "channel": "email",
             "campaign": "spring",
+            "source": "newsletter",
+            "medium": "email",
             "course_id": "course-1",
             "discount_type": "fixed",
             "discount_value": 25,
@@ -20,6 +22,8 @@ def test_admin_can_create_list_and_disable_token() -> None:
     )
     assert created.status_code == 201, created.text
     token = created.json()["token"]
+    assert created.json()["source"] == "newsletter"
+    assert created.json()["medium"] == "email"
 
     listed = client.get(
         "/v1/admin/referral-tokens?channel=email&status=active",
@@ -27,6 +31,8 @@ def test_admin_can_create_list_and_disable_token() -> None:
     )
     assert listed.status_code == 200, listed.text
     assert len(listed.json()["items"]) == 1
+    assert listed.json()["items"][0]["source"] == "newsletter"
+    assert listed.json()["items"][0]["medium"] == "email"
 
     disabled = client.post(
         f"/v1/admin/referral-tokens/{token}/disable",
@@ -90,3 +96,42 @@ def test_admin_create_token_rejects_naive_expires_at() -> None:
     )
     assert response.status_code == 422, response.text
     assert "expires_at должен содержать timezone offset" in response.json()["detail"]
+
+
+def test_admin_create_token_normalizes_and_validates_source_medium() -> None:
+    client = build_client()
+
+    created = client.post(
+        "/v1/admin/referral-tokens",
+        json={
+            "channel": "email",
+            "campaign": "spring-sale",
+            "source": "Newsletter",
+            "medium": "Email_Retention",
+            "course_id": "course-1",
+            "discount_type": "fixed",
+            "discount_value": 10,
+            "course_starts_at": (datetime.now(UTC) + timedelta(days=10)).isoformat(),
+        },
+        headers=auth_headers(sub="admin-1", roles=["admin"]),
+    )
+    assert created.status_code == 201, created.text
+    assert created.json()["source"] == "newsletter"
+    assert created.json()["medium"] == "email_retention"
+
+    invalid = client.post(
+        "/v1/admin/referral-tokens",
+        json={
+            "channel": "email",
+            "campaign": "spring-sale",
+            "source": "bad source",
+            "medium": "email",
+            "course_id": "course-1",
+            "discount_type": "fixed",
+            "discount_value": 10,
+            "course_starts_at": (datetime.now(UTC) + timedelta(days=10)).isoformat(),
+        },
+        headers=auth_headers(sub="admin-1", roles=["admin"]),
+    )
+    assert invalid.status_code == 422, invalid.text
+    assert "source должен содержать только lowercase latin" in invalid.json()["detail"]
