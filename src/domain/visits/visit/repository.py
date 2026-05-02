@@ -22,3 +22,12 @@ class AttributionVisitRepository(Protocol):
         date_to: date | None = None,
     ) -> int:
         """Посчитать клики по фильтрам."""
+
+    def list(
+        self,
+        *,
+        channel: AttributionChannel | None = None,
+        date_from: date | None = None,
+        date_to: date | None = None,
+    ) -> list[AttributionVisit]:
+        """Вернуть список кликов по фильтрам."""

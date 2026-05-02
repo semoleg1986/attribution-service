@@ -12,3 +12,14 @@ class GetChannelReportQuery:
     date_to: date
     actor_id: str
     actor_roles: list[str]
+
+
+@dataclass(frozen=True, slots=True)
+class GetCampaignReportQuery:
+    date_from: date
+    date_to: date
+    actor_id: str
+    actor_roles: list[str]
+    channel: str | None = None
+    limit: int = 50
+    offset: int = 0

@@ -6,10 +6,16 @@ from dataclasses import dataclass
 
 from src.application.facade.application_facade import ApplicationFacade
 from src.application.ports.access_token_verifier import AccessTokenVerifier
+from src.application.reporting.handlers.get_campaign_report_handler import (
+    GetCampaignReportHandler,
+)
 from src.application.reporting.handlers.get_channel_report_handler import (
     GetChannelReportHandler,
 )
-from src.application.reporting.queries.dto import GetChannelReportQuery
+from src.application.reporting.queries.dto import (
+    GetCampaignReportQuery,
+    GetChannelReportQuery,
+)
 from src.application.tokens.commands.dto import (
     CreateReferralTokenCommand,
     DisableReferralTokenCommand,
@@ -122,6 +128,9 @@ def build_runtime() -> RuntimeContainer:
 
     facade.register_query_handler(
         GetChannelReportQuery, GetChannelReportHandler(uow=uow)
+    )
+    facade.register_query_handler(
+        GetCampaignReportQuery, GetCampaignReportHandler(uow=uow)
     )
     return RuntimeContainer(
         settings=settings,

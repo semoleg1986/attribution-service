@@ -63,6 +63,22 @@ class InMemoryAttributionVisitRepository:
             count += 1
         return count
 
+    def list(
+        self,
+        *,
+        channel: AttributionChannel | None = None,
+        date_from: date | None = None,
+        date_to: date | None = None,
+    ) -> list[AttributionVisit]:
+        items = list(self._items)
+        if channel is not None:
+            items = [item for item in items if item.channel == channel]
+        if date_from is not None:
+            items = [item for item in items if item.clicked_at.date() >= date_from]
+        if date_to is not None:
+            items = [item for item in items if item.clicked_at.date() <= date_to]
+        return sorted(items, key=lambda item: item.clicked_at)
+
 
 class InMemoryAttributionConversionRepository:
     """In-memory реализация репозитория конверсий."""

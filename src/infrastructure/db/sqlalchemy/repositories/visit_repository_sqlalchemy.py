@@ -9,7 +9,10 @@ from sqlalchemy.orm import Session
 
 from src.domain.shared.statuses import AttributionChannel
 from src.domain.visits.visit.entity import AttributionVisit
-from src.infrastructure.db.sqlalchemy.mappers.visit_mapper import apply_to_model
+from src.infrastructure.db.sqlalchemy.mappers.visit_mapper import (
+    apply_to_model,
+    to_domain,
+)
 from src.infrastructure.db.sqlalchemy.models import AttributionVisitModel
 
 
@@ -40,3 +43,22 @@ class SqlalchemyAttributionVisitRepository:
             stmt = stmt.where(func.date(AttributionVisitModel.clicked_at) <= date_to)
 
         return int(self._session.execute(stmt).scalar_one())
+
+    def list(
+        self,
+        *,
+        channel: AttributionChannel | None = None,
+        date_from: date | None = None,
+        date_to: date | None = None,
+    ) -> list[AttributionVisit]:
+        stmt = select(AttributionVisitModel)
+        if channel is not None:
+            stmt = stmt.where(AttributionVisitModel.channel == channel.value)
+        if date_from is not None:
+            stmt = stmt.where(func.date(AttributionVisitModel.clicked_at) >= date_from)
+        if date_to is not None:
+            stmt = stmt.where(func.date(AttributionVisitModel.clicked_at) <= date_to)
+        stmt = stmt.order_by(AttributionVisitModel.clicked_at.asc())
+
+        items = self._session.execute(stmt).scalars().all()
+        return [to_domain(item) for item in items]

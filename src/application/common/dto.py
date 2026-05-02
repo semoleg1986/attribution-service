@@ -52,3 +52,22 @@ class ChannelReportItemResult:
     requested: int
     paid: int
     paid_revenue: MoneyResult
+
+
+@dataclass(frozen=True, slots=True)
+class CampaignReportItemResult:
+    channel: str
+    campaign: str | None
+    clicks: int
+    requested: int
+    paid: int
+    gross_revenue: MoneyResult
+    discount_total: MoneyResult
+
+
+@dataclass(frozen=True, slots=True)
+class PaginatedCampaignReportResult:
+    items: list[CampaignReportItemResult]
+    limit: int
+    offset: int
+    total: int

@@ -17,3 +17,20 @@ class ChannelReportItemResponse(BaseModel):
 
 class ChannelReportResponse(BaseModel):
     items: list[ChannelReportItemResponse]
+
+
+class CampaignReportItemResponse(BaseModel):
+    channel: str
+    campaign: str | None = None
+    clicks: int
+    requested: int
+    paid: int
+    gross_revenue: MoneySchema
+    discount_total: MoneySchema
+
+
+class CampaignReportResponse(BaseModel):
+    items: list[CampaignReportItemResponse]
+    limit: int
+    offset: int
+    total: int

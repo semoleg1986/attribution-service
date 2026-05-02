@@ -7,7 +7,10 @@ from datetime import date
 
 from fastapi import APIRouter, Depends, Query
 
-from src.application.reporting.queries.dto import GetChannelReportQuery
+from src.application.reporting.queries.dto import (
+    GetCampaignReportQuery,
+    GetChannelReportQuery,
+)
 from src.application.tokens.commands.dto import (
     CreateReferralTokenCommand,
     DisableReferralTokenCommand,
@@ -15,6 +18,8 @@ from src.application.tokens.commands.dto import (
 from src.application.tokens.queries.dto import ListReferralTokensQuery
 from src.interface.http.common.actor import HttpActor, get_http_actor
 from src.interface.http.v1.schemas.reporting import (
+    CampaignReportItemResponse,
+    CampaignReportResponse,
     ChannelReportItemResponse,
     ChannelReportResponse,
 )
@@ -65,7 +70,9 @@ def list_referral_tokens(
             status=status,
         )
     )
-    return ReferralTokenListResponse(items=[ReferralTokenResponse(**asdict(item)) for item in result])
+    return ReferralTokenListResponse(
+        items=[ReferralTokenResponse(**asdict(item)) for item in result]
+    )
 
 
 @router.post("/referral-tokens/{token}/disable", response_model=ReferralTokenResponse)
@@ -101,4 +108,33 @@ def get_channels_report(
     )
     return ChannelReportResponse(
         items=[ChannelReportItemResponse(**asdict(item)) for item in result]
+    )
+
+
+@router.get("/campaigns/stats", response_model=CampaignReportResponse)
+def get_campaigns_report(
+    date_from: date,
+    date_to: date,
+    channel: str | None = Query(default=None),
+    limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
+    actor: HttpActor = Depends(get_http_actor),
+    facade=Depends(get_facade),
+) -> CampaignReportResponse:
+    result = facade.query(
+        GetCampaignReportQuery(
+            date_from=date_from,
+            date_to=date_to,
+            channel=channel,
+            limit=limit,
+            offset=offset,
+            actor_id=actor.actor_id,
+            actor_roles=actor.roles,
+        )
+    )
+    return CampaignReportResponse(
+        items=[CampaignReportItemResponse(**asdict(item)) for item in result.items],
+        limit=result.limit,
+        offset=result.offset,
+        total=result.total,
     )

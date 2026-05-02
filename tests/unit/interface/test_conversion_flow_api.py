@@ -144,3 +144,108 @@ def test_public_redirect_alias_rejects_unsafe_redirect_target() -> None:
     )
     assert redirect.status_code == 400, redirect.text
     assert "redirect_to" in redirect.json()["detail"]
+
+
+def test_campaign_stats_aggregates_by_channel_and_campaign() -> None:
+    client = build_client()
+
+    spring = client.post(
+        "/v1/admin/referral-tokens",
+        json={
+            "channel": "email",
+            "campaign": "spring",
+            "course_id": "course-1",
+            "discount_type": "fixed",
+            "discount_value": 25,
+            "course_starts_at": (datetime.now(UTC) + timedelta(days=10)).isoformat(),
+        },
+        headers=auth_headers(sub="admin-1", roles=["admin"]),
+    )
+    assert spring.status_code == 201, spring.text
+    spring_token = spring.json()["token"]
+
+    may = client.post(
+        "/v1/admin/referral-tokens",
+        json={
+            "channel": "email",
+            "campaign": "may",
+            "course_id": "course-2",
+            "discount_type": "fixed",
+            "discount_value": 10,
+            "course_starts_at": (datetime.now(UTC) + timedelta(days=10)).isoformat(),
+        },
+        headers=auth_headers(sub="admin-1", roles=["admin"]),
+    )
+    assert may.status_code == 201, may.text
+    may_token = may.json()["token"]
+
+    for token in (spring_token, spring_token, may_token):
+        click = client.post(
+            f"/v1/public/referrals/{token}/click",
+            json={"anonymous_id": f"anon-{token}", "source_url": "https://example.com"},
+        )
+        assert click.status_code == 202, click.text
+
+    requested_1 = client.post(
+        "/v1/internal/conversions/requested",
+        json={
+            "access_grant_id": "grant-spring-1",
+            "course_id": "course-1",
+            "student_id": "student-1",
+            "token": spring_token,
+            "channel": "email",
+            "discount": {"amount": 25, "currency": "USD"},
+        },
+        headers=auth_headers(sub="svc-course", roles=["service"]),
+    )
+    assert requested_1.status_code == 202, requested_1.text
+
+    paid_1 = client.post(
+        "/v1/internal/conversions/paid",
+        json={
+            "access_grant_id": "grant-spring-1",
+            "paid_amount": {"amount": 100, "currency": "USD"},
+            "approved_by_admin_id": "admin-1",
+        },
+        headers=auth_headers(sub="svc-course", roles=["service"]),
+    )
+    assert paid_1.status_code == 202, paid_1.text
+
+    requested_2 = client.post(
+        "/v1/internal/conversions/requested",
+        json={
+            "access_grant_id": "grant-may-1",
+            "course_id": "course-2",
+            "student_id": "student-2",
+            "token": may_token,
+            "channel": "email",
+            "discount": {"amount": 10, "currency": "USD"},
+        },
+        headers=auth_headers(sub="svc-course", roles=["service"]),
+    )
+    assert requested_2.status_code == 202, requested_2.text
+
+    report = client.get(
+        "/v1/admin/campaigns/stats?date_from=2026-01-01&date_to=2026-12-31&channel=email&limit=10&offset=0",
+        headers=auth_headers(sub="admin-1", roles=["admin"]),
+    )
+    assert report.status_code == 200, report.text
+    payload = report.json()
+    assert payload["limit"] == 10
+    assert payload["offset"] == 0
+    assert payload["total"] == 2
+
+    spring_row = next(item for item in payload["items"] if item["campaign"] == "spring")
+    assert spring_row["channel"] == "email"
+    assert spring_row["clicks"] == 2
+    assert spring_row["requested"] == 1
+    assert spring_row["paid"] == 1
+    assert spring_row["gross_revenue"]["amount"] == 100.0
+    assert spring_row["discount_total"]["amount"] == 25.0
+
+    may_row = next(item for item in payload["items"] if item["campaign"] == "may")
+    assert may_row["clicks"] == 1
+    assert may_row["requested"] == 1
+    assert may_row["paid"] == 0
+    assert may_row["gross_revenue"]["amount"] == 0.0
+    assert may_row["discount_total"]["amount"] == 10.0
